@@ -1,0 +1,3343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>KAIROS • Curated Global Summits & Experiences</title>
+  <meta name="description" content="A luxury event management & curated experience platform inspired by modern Framer design and Three.js WebGL spatial mechanics." />
+  
+  <!-- Google Fonts: Cormorant Garamond (Editorial Serif), Cinzel, Plus Jakarta Sans (Precision UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Three.js & OrbitControls from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <style>
+    /* ==========================================================================
+       RESET & ROOT DESIGN TOKENS
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    :root {
+      --bg-dark: #09090b;
+      --bg-surface: #121215;
+      --bg-elevated: #1a1a20;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-medium: rgba(255, 255, 255, 0.16);
+      --border-focus: rgba(255, 255, 255, 0.35);
+      
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      
+      --accent-gold: #e2c08d;
+      --accent-glow: rgba(226, 192, 141, 0.3);
+      --accent-blue: #70a1ff;
+      
+      --font-serif: 'Cormorant Garamond', serif;
+      --font-display: 'Cinzel', serif;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      
+      --ease-framer: cubic-bezier(0.16, 1, 0.3, 1);
+      --radius-pill: 9999px;
+      --radius-card: 20px;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      overflow-x: hidden;
+      selection-background-color: var(--text-primary);
+      selection-color: var(--bg-dark);
+    }
+
+    ::selection {
+      background: rgba(255, 255, 255, 0.25);
+      color: #fff;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      background: none;
+      border: none;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* ==========================================================================
+       TOP GLOBAL NAVIGATION
+       ========================================================================== */
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2.5rem;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: linear-gradient(180deg, rgba(9, 9, 11, 0.8) 0%, rgba(9, 9, 11, 0.2) 80%, transparent 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-symbol {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%);
+      border: 1px solid rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      letter-spacing: 0.15em;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .brand-sub {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      border-left: 1px solid rgba(255,255,255,0.15);
+      padding-left: 0.75rem;
+      margin-left: 0.25rem;
+    }
+
+    .nav-center-clocks {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .clock-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .clock-pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-link {
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-pill);
+      transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .btn-audio-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+    }
+
+    .btn-audio-toggle:hover {
+      border-color: var(--border-medium);
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .audio-wave {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      height: 10px;
+    }
+
+    .audio-wave span {
+      width: 2px;
+      height: 100%;
+      background: currentColor;
+      border-radius: 1px;
+      transition: height 0.2s ease;
+    }
+
+    .btn-primary-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 1.25rem;
+      border-radius: var(--radius-pill);
+      background: #ffffff;
+      color: #000000;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      transition: all 0.3s var(--ease-framer);
+      box-shadow: 0 4px 15px rgba(255,255,255,0.15);
+    }
+
+    .btn-primary-pill:hover {
+      background: #f0f0f0;
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 6px 20px rgba(255,255,255,0.25);
+    }
+
+    /* ==========================================================================
+       HERO SHOWCASE (THE SIGNATURE FRAMER EXPERIENCE)
+       ========================================================================== */
+    .hero-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      min-height: 720px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+
+    /* Three.js WebGL Canvas for Fluid Shader Transitions */
+    #hero-webgl-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* CSS Image Fallback/Backing Layer */
+    .hero-backdrop-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      z-index: 0;
+      transition: transform 1.2s var(--ease-framer), opacity 0.8s ease;
+      filter: brightness(0.65) contrast(1.1);
+    }
+
+    .hero-backdrop-image.zoom-active {
+      animation: slowKenBurns 24s alternate infinite ease-in-out;
+    }
+
+    @keyframes slowKenBurns {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.08); }
+    }
+
+    /* Vignette & Soft Gradient Overlays */
+    .hero-vignette {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      background: radial-gradient(circle at center, transparent 35%, rgba(0,0,0,0.65) 85%, #09090b 100%),
+                  linear-gradient(to bottom, rgba(9,9,11,0.6) 0%, transparent 25%, transparent 70%, #09090b 100%);
+      pointer-events: none;
+    }
+
+    /* ==========================================================================
+       FLOATING FRAMER CONTROL TOOLBAR (TOP-CENTER)
+       ========================================================================== */
+    .framer-control-toolbar {
+      position: absolute;
+      top: 92px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.4rem 0.85rem;
+      background: rgba(18, 18, 22, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-pill);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 20px 40px rgba(0,0,0,0.6);
+      transition: all 0.3s ease;
+      max-width: 95vw;
+      overflow-x: auto;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding-right: 0.75rem;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .toolbar-group:last-child {
+      border-right: none;
+      padding-right: 0;
+    }
+
+    .toolbar-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .toolbar-pill-btn {
+      padding: 0.25rem 0.65rem;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.08);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #fff;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .toolbar-pill-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .toolbar-pill-btn.active {
+      background: #ffffff;
+      color: #000000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    /* Switch Toggles */
+    .switch-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+    }
+
+    .switch-pill {
+      position: relative;
+      width: 28px;
+      height: 16px;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      transition: background 0.25s ease;
+    }
+
+    .switch-pill.active {
+      background: #ffffff;
+    }
+
+    .switch-handle {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #000;
+      transition: transform 0.25s var(--ease-framer);
+    }
+
+    .switch-pill.active .switch-handle {
+      transform: translateX(12px);
+      background: #000;
+    }
+
+    /* ==========================================================================
+       HERO CONTENT & STAGGERED REVEALS (LEFT SIDE)
+       ========================================================================== */
+    .hero-content-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 1440px;
+      height: 100%;
+      margin: 0 auto;
+      padding: 0 4rem;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .hero-text-block {
+      max-width: 540px;
+      pointer-events: auto;
+      transition: all 0.6s var(--ease-framer);
+    }
+
+    /* Alignment Presets controlled by Toolbar */
+    .hero-text-block.pos-top-left {
+      margin-top: -6vh;
+    }
+    .hero-text-block.pos-bottom-left {
+      margin-top: 18vh;
+    }
+    .hero-text-block.pos-center {
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .hero-edition-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+      font-weight: 600;
+      margin-bottom: 0.85rem;
+    }
+
+    .hero-headline {
+      font-family: var(--font-serif);
+      font-size: clamp(2.8rem, 5.2vw, 4.4rem);
+      line-height: 1.05;
+      font-weight: 300;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+      margin-bottom: 1.25rem;
+      text-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    }
+
+    .hero-thin-rule {
+      width: 56px;
+      height: 1.5px;
+      background: rgba(255, 255, 255, 0.4);
+      margin-bottom: 1.5rem;
+      transition: width 0.4s ease;
+    }
+
+    .hero-text-block.pos-center .hero-thin-rule {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero-description {
+      font-size: 1rem;
+      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.82);
+      font-weight: 300;
+      margin-bottom: 2rem;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+    }
+
+    .hero-meta-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 2rem;
+    }
+
+    .meta-pill {
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--radius-pill);
+      background: rgba(14, 14, 18, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #e4e4e7;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .hero-cta-group {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .btn-hero-action {
+      padding: 0.75rem 1.8rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #fff;
+      transition: all 0.3s var(--ease-framer);
+    }
+
+    .btn-hero-action:hover {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(255,255,255,0.2);
+    }
+
+    .btn-hero-secondary {
+      padding: 0.75rem 1.4rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid transparent;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+    }
+
+    .btn-hero-secondary:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* ==========================================================================
+       GIANT FRAMER TYPOGRAPHY INDEX (RIGHT SIDE)
+       ========================================================================== */
+    .hero-giant-index {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.25rem;
+      pointer-events: auto;
+      user-select: none;
+    }
+
+    .giant-index-item {
+      font-family: var(--font-serif);
+      font-size: clamp(3.2rem, 7.5vw, 6.4rem);
+      font-weight: 700;
+      line-height: 0.95;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      color: transparent;
+      -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.35);
+      transition: all 0.5s var(--ease-framer);
+      transform-origin: right center;
+      position: relative;
+      padding: 0.15rem 0.5rem;
+    }
+
+    .giant-index-item:hover {
+      -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.85);
+      transform: translateX(-12px) scale(1.02);
+    }
+
+    .giant-index-item.active {
+      color: #ffffff;
+      -webkit-text-stroke: 0px transparent;
+      text-shadow: 0 0 50px rgba(255, 255, 255, 0.45);
+      transform: translateX(-20px) scale(1.06);
+    }
+
+    /* Left Pagination Indicators (Framer Dots) */
+    .hero-dots-rail {
+      position: absolute;
+      left: 2.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      pointer-events: auto;
+      transition: opacity 0.3s ease;
+    }
+
+    .hero-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      transition: all 0.3s var(--ease-framer);
+    }
+
+    .hero-dot:hover {
+      background: rgba(255, 255, 255, 0.7);
+      transform: scale(1.3);
+    }
+
+    .hero-dot.active {
+      background: #ffffff;
+      height: 22px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+
+    /* Left / Right Nav Arrow Paddles */
+    .hero-nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 30;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(18, 18, 22, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .hero-nav-arrow:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-50%) scale(1.08);
+    }
+
+    .hero-nav-arrow.prev { left: 1.5rem; }
+    .hero-nav-arrow.next { right: 1.5rem; }
+
+    /* ==========================================================================
+       SECTION 2: CURATED SUMMITS ROSTER & FILTER MATRIX
+       ========================================================================== */
+    .section-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 7rem 3rem;
+      position: relative;
+    }
+
+    .section-header-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 3.5rem;
+    }
+
+    .section-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2.2rem, 4vw, 3.4rem);
+      font-weight: 300;
+      color: #fff;
+      line-height: 1.15;
+    }
+
+    .section-desc {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    /* Filter Tabs */
+    .filter-tabs-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+
+    .filter-tab {
+      padding: 0.5rem 1.1rem;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .filter-tab:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    .filter-tab.active {
+      background: #ffffff;
+      color: #000000;
+      font-weight: 600;
+      border-color: #ffffff;
+    }
+
+    /* Summit Card Grid */
+    .summit-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 2rem;
+    }
+
+    .summit-card {
+      position: relative;
+      border-radius: var(--radius-card);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.4s var(--ease-framer);
+    }
+
+    .summit-card:hover {
+      transform: translateY(-8px);
+      border-color: var(--border-medium);
+      box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+    }
+
+    .card-thumb-wrap {
+      position: relative;
+      width: 100%;
+      height: 240px;
+      overflow: hidden;
+      background: #18181b;
+    }
+
+    .card-thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.8s var(--ease-framer);
+    }
+
+    .summit-card:hover .card-thumb-wrap img {
+      transform: scale(1.06);
+    }
+
+    .card-badge-status {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: var(--radius-pill);
+      background: rgba(18, 18, 22, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: #fff;
+    }
+
+    .card-bookmark-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(18, 18, 22, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .card-bookmark-btn:hover {
+      background: #ffffff;
+      color: #000;
+    }
+
+    .card-content-body {
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: space-between;
+    }
+
+    .card-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--accent-gold);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-title {
+      font-family: var(--font-serif);
+      font-size: 1.65rem;
+      font-weight: 400;
+      color: #fff;
+      line-height: 1.25;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-desc {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-footer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 1.25rem;
+    }
+
+    .card-capacity-indicator {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .capacity-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .capacity-bar-track {
+      width: 100px;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    .capacity-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, #10b981, #e2c08d);
+    }
+
+    .card-btn-book {
+      padding: 0.5rem 1.1rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-medium);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: #fff;
+      transition: all 0.2s ease;
+    }
+
+    .card-btn-book:hover {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+    }
+
+    /* ==========================================================================
+       SECTION 3: INTERACTIVE 3D SPATIAL VENUE VISUALIZER (THREE.JS)
+       ========================================================================== */
+    .venue-visualizer-section {
+      background: linear-gradient(180deg, #09090b 0%, #111115 50%, #09090b 100%);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+      position: relative;
+    }
+
+    .venue-layout-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .venue-canvas-wrap {
+      position: relative;
+      height: 580px;
+      border-radius: var(--radius-card);
+      border: 1px solid var(--border-medium);
+      overflow: hidden;
+      background: #070709;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+    }
+
+    #venue-three-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .venue-canvas-overlay-ui {
+      position: absolute;
+      top: 1.25rem;
+      left: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+
+    .venue-telemetry-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.8rem;
+      border-radius: var(--radius-pill);
+      background: rgba(18, 18, 22, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: #fff;
+    }
+
+    .venue-interaction-hint {
+      position: absolute;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.35rem 0.9rem;
+      border-radius: var(--radius-pill);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .venue-controls-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-card);
+      padding: 1.75rem;
+    }
+
+    .venue-panel-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .venue-lighting-presets {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .lighting-preset-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.7rem 1rem;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .lighting-preset-btn:hover {
+      background: rgba(255, 255, 255, 0.07);
+      color: #fff;
+    }
+
+    .lighting-preset-btn.active {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--border-focus);
+      color: #fff;
+    }
+
+    .preset-color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .venue-stats-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      font-size: 0.75rem;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+    }
+
+    .stat-val {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       SECTION 4: MULTITRACK SCHEDULE MATRIX
+       ========================================================================== */
+    .schedule-matrix-wrap {
+      margin-top: 2.5rem;
+    }
+
+    .schedule-day-tabs {
+      display: flex;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 2rem;
+    }
+
+    .schedule-day-tab {
+      padding: 0.85rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s ease;
+    }
+
+    .schedule-day-tab:hover {
+      color: #fff;
+    }
+
+    .schedule-day-tab.active {
+      color: #fff;
+    }
+
+    .schedule-day-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: #ffffff;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+
+    .schedule-timeline-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .timeline-item-card {
+      display: grid;
+      grid-template-columns: 140px 1fr auto;
+      align-items: center;
+      gap: 2rem;
+      padding: 1.5rem 2rem;
+      border-radius: 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      transition: all 0.25s ease;
+    }
+
+    .timeline-item-card:hover {
+      border-color: var(--border-medium);
+      background: var(--bg-elevated);
+      transform: translateX(6px);
+    }
+
+    .timeline-time {
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--accent-gold);
+    }
+
+    .timeline-details h4 {
+      font-family: var(--font-serif);
+      font-size: 1.35rem;
+      font-weight: 400;
+      color: #fff;
+      margin-bottom: 0.35rem;
+    }
+
+    .timeline-speaker-pill {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .timeline-stage-tag {
+      padding: 0.35rem 0.8rem;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       SECTION 5: EVENT MANAGEMENT SUITE PLATFORM CAPABILITIES
+       ========================================================================== */
+    .platform-suite-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .platform-feat-card {
+      padding: 2.2rem;
+      border-radius: var(--radius-card);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+      border: 1px solid var(--border-subtle);
+      transition: all 0.3s var(--ease-framer);
+    }
+
+    .platform-feat-card:hover {
+      border-color: var(--border-medium);
+      transform: translateY(-6px);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.4);
+    }
+
+    .feat-icon-bubble {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-gold);
+      margin-bottom: 1.5rem;
+    }
+
+    .feat-card-title {
+      font-family: var(--font-serif);
+      font-size: 1.45rem;
+      font-weight: 400;
+      color: #fff;
+      margin-bottom: 0.75rem;
+    }
+
+    .feat-card-desc {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ==========================================================================
+       SECTION 6: PASS CUSTOMIZER & TICKET TIERS
+       ========================================================================== */
+    .passes-tiers-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-top: 3.5rem;
+    }
+
+    .pass-tier-card {
+      border-radius: var(--radius-card);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      transition: all 0.3s var(--ease-framer);
+    }
+
+    .pass-tier-card.featured {
+      background: linear-gradient(180deg, #181820 0%, #121217 100%);
+      border-color: rgba(226, 192, 141, 0.4);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(226, 192, 141, 0.3);
+      transform: scale(1.03);
+    }
+
+    .tier-badge-featured {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.3rem 0.9rem;
+      border-radius: var(--radius-pill);
+      background: var(--accent-gold);
+      color: #000;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .tier-name {
+      font-family: var(--font-serif);
+      font-size: 1.8rem;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .tier-price {
+      display: flex;
+      align-items: baseline;
+      gap: 0.35rem;
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 1.5rem;
+    }
+
+    .tier-price span {
+      font-size: 0.9rem;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    .tier-perks-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 2.5rem;
+    }
+
+    .tier-perks-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .tier-perks-list li svg {
+      color: #10b981;
+      flex-shrink: 0;
+    }
+
+    .btn-tier-select {
+      width: 100%;
+      padding: 0.85rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-medium);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #fff;
+      transition: all 0.25s ease;
+      text-align: center;
+    }
+
+    .pass-tier-card.featured .btn-tier-select {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+    }
+
+    .btn-tier-select:hover {
+      background: #ffffff;
+      color: #000000;
+      transform: translateY(-2px);
+    }
+
+    /* ==========================================================================
+       INTERACTIVE 3D PASS & RSVP MODAL
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 200;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+      padding: 1.5rem;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-dialog-box {
+      width: 100%;
+      max-width: 960px;
+      background: #111116;
+      border: 1px solid var(--border-medium);
+      border-radius: 24px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      box-shadow: 0 30px 70px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.12);
+      transform: scale(0.94);
+      transition: transform 0.4s var(--ease-framer);
+    }
+
+    .modal-backdrop.open .modal-dialog-box {
+      transform: scale(1);
+    }
+
+    /* Left side: Interactive 3D Holographic Pass Canvas */
+    .modal-3d-pass-view {
+      position: relative;
+      background: #08080a;
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 2rem;
+    }
+
+    #pass-3d-canvas {
+      width: 100%;
+      height: 380px;
+      display: block;
+      cursor: grab;
+    }
+
+    #pass-3d-canvas:active {
+      cursor: grabbing;
+    }
+
+    .pass-tilt-hint {
+      margin-top: 1rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* Right side: Registration form */
+    .modal-form-view {
+      padding: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: scale(1.05);
+    }
+
+    .modal-title {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-sub {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    .form-group-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group-field label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .form-group-field input, .form-group-field select {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-group-field input:focus, .form-group-field select:focus {
+      border-color: var(--border-focus);
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .btn-modal-submit {
+      margin-top: 1rem;
+      padding: 0.9rem;
+      border-radius: var(--radius-pill);
+      background: #ffffff;
+      color: #000;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .btn-modal-submit:hover {
+      background: #e2c08d;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(226, 192, 141, 0.3);
+    }
+
+    /* Success state inside modal */
+    .modal-success-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 2rem 0;
+      gap: 1rem;
+    }
+
+    .modal-success-screen.show {
+      display: flex;
+    }
+
+    /* ==========================================================================
+       FOOTER
+       ========================================================================== */
+    .site-footer {
+      border-top: 1px solid var(--border-subtle);
+      background: #070709;
+      padding: 5rem 3rem 3rem;
+    }
+
+    .footer-content-grid {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 3rem;
+      margin-bottom: 4rem;
+    }
+
+    .footer-brand-bio {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 320px;
+      margin-top: 1rem;
+    }
+
+    .footer-col-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #fff;
+      margin-bottom: 1.25rem;
+    }
+
+    .footer-links-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .footer-links-list a:hover {
+      color: #fff;
+    }
+
+    .footer-bottom-row {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 2rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       RESPONSIVE ADAPTATIONS
+       ========================================================================== */
+    @media (max-width: 1024px) {
+      .hero-content-wrapper {
+        padding: 0 2rem;
+      }
+      .platform-suite-grid, .passes-tiers-grid {
+        grid-template-columns: 1fr;
+      }
+      .venue-layout-grid {
+        grid-template-columns: 1fr;
+      }
+      .footer-content-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .modal-dialog-box {
+        grid-template-columns: 1fr;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .modal-3d-pass-view {
+        height: 280px;
+      }
+      #pass-3d-canvas {
+        height: 240px;
+      }
+      .nav-center-clocks {
+        display: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .top-nav {
+        padding: 0 1.25rem;
+      }
+      .framer-control-toolbar {
+        top: 76px;
+        padding: 0.35rem 0.6rem;
+      }
+      .hero-content-wrapper {
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        padding-top: 6rem;
+      }
+      .hero-giant-index {
+        position: absolute;
+        bottom: 2rem;
+        right: 1.5rem;
+        align-items: flex-end;
+      }
+      .giant-index-item {
+        font-size: 2.6rem;
+      }
+      .hero-dots-rail {
+        display: none;
+      }
+      .timeline-item-card {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+      .footer-content-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-nav-arrow {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       TOP GLOBAL NAVIGATION
+       ========================================================================== -->
+  <header class="top-nav" id="main-nav">
+    <div class="brand-logo">
+      <div class="brand-symbol">K</div>
+      <div>
+        <span class="brand-name">KAIROS</span>
+        <span class="brand-sub">Atelier • 2026</span>
+      </div>
+    </div>
+
+    <!-- Live Telemetry Clocks -->
+    <div class="nav-center-clocks">
+      <div class="clock-item">
+        <div class="clock-pulse"></div>
+        <span>KYOTO</span>
+        <span id="clock-kyoto" style="color: #fff;">18:30 JST</span>
+      </div>
+      <div class="clock-item">
+        <span>PARIS</span>
+        <span id="clock-paris" style="color: #fff;">10:30 CET</span>
+      </div>
+      <div class="clock-item">
+        <span>SAN FRANCISCO</span>
+        <span id="clock-sf" style="color: #fff;">01:30 PDT</span>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn-audio-toggle" id="btn-audio-toggle" title="Toggle Ambient Soundscape">
+        <div class="audio-wave">
+          <span></span><span style="height: 60%"></span><span></span>
+        </div>
+        <span id="audio-label">SOUND: OFF</span>
+      </button>
+
+      <a href="#passes-section" class="btn-primary-pill" onclick="openPassModal('Summit Fellow')">
+        <span>RESERVE PASS</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       HERO SHOWCASE (SIGNATURE FRAMER COMPONENT WITH THREE.JS SHADER)
+       ========================================================================== -->
+  <section class="hero-container" id="hero-showcase">
+    <!-- WebGL Canvas for Shader Displacement Transitions -->
+    <canvas id="hero-webgl-canvas"></canvas>
+    
+    <!-- Background Image Fallback & Scale Canvas -->
+    <div class="hero-backdrop-image zoom-active" id="hero-backdrop"></div>
+    <div class="hero-vignette"></div>
+
+    <!-- FLOATING FRAMER CONTROL TOOLBAR (TOP-CENTER) -->
+    <div class="framer-control-toolbar" id="control-toolbar" role="toolbar" aria-label="Hero Customizer Controls">
+      
+      <!-- PRESET -->
+      <div class="toolbar-group">
+        <span class="toolbar-label">PRESET</span>
+        <button class="toolbar-pill-btn active" id="btn-preset-custom">Custom</button>
+        <button class="toolbar-pill-btn" id="btn-preset-minimal">Minimal</button>
+      </div>
+
+      <!-- TITLE MODE -->
+      <div class="toolbar-group">
+        <span class="toolbar-label">TITLE</span>
+        <button class="toolbar-pill-btn active" id="btn-title-words">Words</button>
+        <button class="toolbar-pill-btn" id="btn-title-roman">Roman</button>
+        <button class="toolbar-pill-btn" id="btn-title-dates">Dates</button>
+      </div>
+
+      <!-- CONTENT ALIGNMENT -->
+      <div class="toolbar-group">
+        <span class="toolbar-label">CONTENT</span>
+        <button class="toolbar-pill-btn active" id="btn-pos-topleft">Top-Left</button>
+        <button class="toolbar-pill-btn" id="btn-pos-bottomleft">Bottom-Left</button>
+        <button class="toolbar-pill-btn" id="btn-pos-center">Center</button>
+      </div>
+
+      <!-- SHADER SELECTION -->
+      <div class="toolbar-group">
+        <span class="toolbar-label">SHADER</span>
+        <button class="toolbar-pill-btn active" id="btn-shader-ripple">Ripple</button>
+        <button class="toolbar-pill-btn" id="btn-shader-curtain">Wave</button>
+      </div>
+
+      <!-- ZOOM TOGGLE -->
+      <div class="toolbar-group">
+        <span class="toolbar-label">ZOOM</span>
+        <div class="switch-toggle-wrap" id="toggle-zoom" role="switch" aria-checked="true">
+          <div class="switch-pill active"><div class="switch-handle"></div></div>
+        </div>
+      </div>
+
+      <!-- DOTS TOGGLE -->
+      <div class="toolbar-group">
+        <span class="toolbar-label">DOTS</span>
+        <div class="switch-toggle-wrap" id="toggle-dots" role="switch" aria-checked="true">
+          <div class="switch-pill active"><div class="switch-handle"></div></div>
+        </div>
+      </div>
+
+      <!-- AUTOPLAY TOGGLE -->
+      <div class="toolbar-group">
+        <span class="toolbar-label">AUTOPLAY</span>
+        <div class="switch-toggle-wrap" id="toggle-autoplay" role="switch" aria-checked="false">
+          <div class="switch-pill"><div class="switch-handle"></div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- LEFT PAGINATION DOTS (FRAMER STYLE) -->
+    <div class="hero-dots-rail" id="hero-dots-rail">
+      <div class="hero-dot active" data-index="0" title="Slide 1"></div>
+      <div class="hero-dot" data-index="1" title="Slide 2"></div>
+      <div class="hero-dot" data-index="2" title="Slide 3"></div>
+      <div class="hero-dot" data-index="3" title="Slide 4"></div>
+      <div class="hero-dot" data-index="4" title="Slide 5"></div>
+    </div>
+
+    <!-- NAVIGATION ARROWS -->
+    <button class="hero-nav-arrow prev" id="btn-hero-prev" aria-label="Previous Slide">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="hero-nav-arrow next" id="btn-hero-next" aria-label="Next Slide">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+
+    <!-- HERO CONTENT CONTAINER -->
+    <div class="hero-content-wrapper">
+      
+      <!-- Editorial Left Text Block -->
+      <div class="hero-text-block pos-top-left" id="hero-text-block">
+        <div class="hero-edition-tag" id="hero-edition-tag">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--accent-gold);"></span>
+          SUMMIT 01 • KYOTO ARCHITECTURE CONCLAVE
+        </div>
+        
+        <h1 class="hero-headline" id="hero-headline">Stillness has a shape.</h1>
+        <div class="hero-thin-rule"></div>
+        
+        <p class="hero-description" id="hero-description">
+          Wood, stone, and silence guide every step through the bamboo sanctuary. Architecture harmonizes with ambient acoustic resonance.
+        </p>
+
+        <div class="hero-meta-pills" id="hero-meta-pills">
+          <span class="meta-pill" id="pill-date">OCT 14–18, 2026</span>
+          <span class="meta-pill" id="pill-venue">KYOTO PAVILION • JAPAN</span>
+          <span class="meta-pill" id="pill-cap">120 FELLOWS ONLY</span>
+        </div>
+
+        <div class="hero-cta-group">
+          <button class="btn-hero-action" onclick="openPassModal('The Monolith Summit')">Reserve Passes</button>
+          <a href="#summit-roster" class="btn-hero-secondary">Explore Dossier</a>
+        </div>
+      </div>
+
+      <!-- GIANT RIGHT TYPOGRAPHY INDEX (FRAMER SIGNATURE) -->
+      <div class="hero-giant-index" id="hero-giant-index">
+        <div class="giant-index-item active" data-index="0">ONE</div>
+        <div class="giant-index-item" data-index="1">TWO</div>
+        <div class="giant-index-item" data-index="2">THREE</div>
+        <div class="giant-index-item" data-index="3">FOUR</div>
+        <div class="giant-index-item" data-index="4">FIVE</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       SECTION 2: CURATED EVENT ROSTER & FILTER MATRIX
+       ========================================================================== */ -->
+  <section class="section-container" id="summit-roster">
+    <div class="section-header-wrap">
+      <span class="section-tag">CURATED ROSTER • 2026 EDITION</span>
+      <h2 class="section-title">Worldwide Gatherings of Vision & Form</h2>
+      <p class="section-desc">
+        Each KAIROS summit is an intimate, site-specific salon bringing together 80–200 luminaries across spatial architecture, generative acoustics, culinary arts, and human agency.
+      </p>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs-row" id="filter-tabs">
+      <button class="filter-tab active" data-filter="all">All Summits (5)</button>
+      <button class="filter-tab" data-filter="architecture">Architecture & Space</button>
+      <button class="filter-tab" data-filter="audiovisual">Audiovisual Arts</button>
+      <button class="filter-tab" data-filter="gastronomy">Gastronomy</button>
+      <button class="filter-tab" data-filter="intelligence">Synthetic Intelligence</button>
+    </div>
+
+    <!-- Summit Cards -->
+    <div class="summit-cards-grid" id="cards-grid">
+
+      <!-- Card 1 -->
+      <div class="summit-card" data-category="architecture">
+        <div class="card-thumb-wrap">
+          <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80" alt="Monolith Summit Kyoto" loading="lazy" />
+          <div class="card-badge-status">92% BOOKED</div>
+          <button class="card-bookmark-btn" title="Bookmark Event" onclick="toggleBookmark(this)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </div>
+        <div class="card-content-body">
+          <div>
+            <div class="card-meta-row">OCT 14–18, 2026 • KYOTO</div>
+            <h3 class="card-title">The Monolith Summit</h3>
+            <p class="card-desc">Architectural purity meets Japanese acoustic geometry. A 4-day inquiry into spatial silence, timber framing, and meditative monoliths.</p>
+          </div>
+          <div class="card-footer-row">
+            <div class="card-capacity-indicator">
+              <span class="capacity-label">110 / 120 Attendees</span>
+              <div class="capacity-bar-track"><div class="capacity-bar-fill" style="width: 92%"></div></div>
+            </div>
+            <button class="card-btn-book" onclick="openPassModal('The Monolith Summit')">Register</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="summit-card" data-category="audiovisual">
+        <div class="card-thumb-wrap">
+          <img src="https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1200&q=80" alt="Aura Audiovisual Reykjavik" loading="lazy" />
+          <div class="card-badge-status">FILLING FAST</div>
+          <button class="card-bookmark-btn" title="Bookmark Event" onclick="toggleBookmark(this)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </div>
+        <div class="card-content-body">
+          <div>
+            <div class="card-meta-row">NOV 02–06, 2026 • REYKJAVIK</div>
+            <h3 class="card-title">Aura Audiovisual Symposium</h3>
+            <p class="card-desc">Sub-bass frequencies and volumetric lasers echoing across basalt cavern halls. Where synthetic generative light dissolves the barrier between sound and body.</p>
+          </div>
+          <div class="card-footer-row">
+            <div class="card-capacity-indicator">
+              <span class="capacity-label">145 / 180 Attendees</span>
+              <div class="capacity-bar-track"><div class="capacity-bar-fill" style="width: 80%"></div></div>
+            </div>
+            <button class="card-btn-book" onclick="openPassModal('Aura Audiovisual Symposium')">Register</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="summit-card" data-category="gastronomy">
+        <div class="card-thumb-wrap">
+          <img src="https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1200&q=80" alt="Atelier Noir Paris" loading="lazy" />
+          <div class="card-badge-status">INVITATIONAL</div>
+          <button class="card-bookmark-btn" title="Bookmark Event" onclick="toggleBookmark(this)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </div>
+        <div class="card-content-body">
+          <div>
+            <div class="card-meta-row">DEC 18–21, 2026 • PARIS</div>
+            <h3 class="card-title">Atelier Noir Culinary Gala</h3>
+            <p class="card-desc">Cooking as an architectural rhythm. An avant-garde 14-course sensory dining installation orchestrating tactile textures, smoke, and vintage cellar reserves.</p>
+          </div>
+          <div class="card-footer-row">
+            <div class="card-capacity-indicator">
+              <span class="capacity-label">74 / 80 Attendees</span>
+              <div class="capacity-bar-track"><div class="capacity-bar-fill" style="width: 95%"></div></div>
+            </div>
+            <button class="card-btn-book" onclick="openPassModal('Atelier Noir Culinary Gala')">Register</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="summit-card" data-category="intelligence">
+        <div class="card-thumb-wrap">
+          <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80" alt="Synapse Intelligence Forum" loading="lazy" />
+          <div class="card-badge-status">OPEN ACCESS</div>
+          <button class="card-bookmark-btn" title="Bookmark Event" onclick="toggleBookmark(this)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </div>
+        <div class="card-content-body">
+          <div>
+            <div class="card-meta-row">JAN 22–26, 2027 • SAN FRANCISCO</div>
+            <h3 class="card-title">Synapse Intelligence Forum</h3>
+            <p class="card-desc">Deep inquiry into synthetic consciousness, neural interfaces, and autonomous agent architectures at the Presidio Officers’ Club.</p>
+          </div>
+          <div class="card-footer-row">
+            <div class="card-capacity-indicator">
+              <span class="capacity-label">180 / 250 Attendees</span>
+              <div class="capacity-bar-track"><div class="capacity-bar-fill" style="width: 72%"></div></div>
+            </div>
+            <button class="card-btn-book" onclick="openPassModal('Synapse Intelligence Forum')">Register</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="summit-card" data-category="audiovisual">
+        <div class="card-thumb-wrap">
+          <img src="https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80" alt="Solstice Desert AlUla" loading="lazy" />
+          <div class="card-badge-status">WAITLIST OPEN</div>
+          <button class="card-bookmark-btn" title="Bookmark Event" onclick="toggleBookmark(this)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </div>
+        <div class="card-content-body">
+          <div>
+            <div class="card-meta-row">FEB 15–20, 2027 • ALULA DESERT</div>
+            <h3 class="card-title">Solstice Desert Conclave</h3>
+            <p class="card-desc">Where crimson sandstone canyons meet celestial observation telescopes and ambient electronic concerts beneath unpolluted starlight.</p>
+          </div>
+          <div class="card-footer-row">
+            <div class="card-capacity-indicator">
+              <span class="capacity-label">140 / 150 Attendees</span>
+              <div class="capacity-bar-track"><div class="capacity-bar-fill" style="width: 93%"></div></div>
+            </div>
+            <button class="card-btn-book" onclick="openPassModal('Solstice Desert Conclave')">Register</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       SECTION 3: THREE.JS SPATIAL VENUE & STAGE VISUALIZER
+       ========================================================================== */ -->
+  <section class="section-container venue-visualizer-section" id="venue-spatial">
+    <div class="section-header-wrap">
+      <span class="section-tag">SPATIAL ARCHITECTURE • THREE.JS ENGINE</span>
+      <h2 class="section-title">Interactive 3D Stage & Acoustics Lab</h2>
+      <p class="section-desc">
+        Explore KAIROS's proprietary spatial staging tool. Event directors utilize real-time WebGL modeling to configure volumetric lighting, VIP seating sightlines, and speaker placement.
+      </p>
+    </div>
+
+    <div class="venue-layout-grid">
+      <!-- 3D Canvas Window -->
+      <div class="venue-canvas-wrap">
+        <canvas id="venue-three-canvas"></canvas>
+        
+        <div class="venue-canvas-overlay-ui">
+          <div class="venue-telemetry-badge">
+            <span class="clock-pulse" style="background:#70a1ff; box-shadow: 0 0 8px #70a1ff;"></span>
+            <span>MODEL: KYOTO BAMBOO PAVILION STAGE</span>
+          </div>
+          <div class="venue-telemetry-badge" id="telemetry-camera">
+            <span>AZIMUTH: 45° • FOV: 50mm</span>
+          </div>
+        </div>
+
+        <div class="venue-interaction-hint">
+          Drag to Orbit • Pinch / Scroll to Zoom • Right-click to Pan
+        </div>
+      </div>
+
+      <!-- Controls Sidebar -->
+      <div class="venue-controls-panel">
+        <div class="venue-panel-title">
+          <span>Staging Lighting Rig</span>
+          <span style="font-size: 0.68rem; color: var(--accent-gold);">LIVE SYNC</span>
+        </div>
+
+        <div class="venue-lighting-presets">
+          <button class="lighting-preset-btn active" onclick="setVenueLighting('blue')">
+            <span>Nocturne Atmosphere</span>
+            <span class="preset-color-dot" style="background: #70a1ff; box-shadow: 0 0 8px #70a1ff;"></span>
+          </button>
+          <button class="lighting-preset-btn" onclick="setVenueLighting('amber')">
+            <span>Golden Hour Amber</span>
+            <span class="preset-color-dot" style="background: #e2c08d; box-shadow: 0 0 8px #e2c08d;"></span>
+          </button>
+          <button class="lighting-preset-btn" onclick="setVenueLighting('monochrome')">
+            <span>Pure Architectural Monolith</span>
+            <span class="preset-color-dot" style="background: #ffffff; box-shadow: 0 0 8px #fff;"></span>
+          </button>
+          <button class="lighting-preset-btn" onclick="setVenueLighting('emerald')">
+            <span>Aurora Borealis Glow</span>
+            <span class="preset-color-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+          </button>
+        </div>
+
+        <div class="venue-panel-title" style="margin-top: 0.5rem;">
+          <span>Camera Waypoints</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+          <button class="lighting-preset-btn" onclick="resetVenueCamera('front')">Stage Front</button>
+          <button class="lighting-preset-btn" onclick="resetVenueCamera('mezzanine')">Mezzanine</button>
+          <button class="lighting-preset-btn" onclick="resetVenueCamera('top')">Top Ortho</button>
+          <button class="lighting-preset-btn" onclick="toggleStageRotation()">Rotate: On</button>
+        </div>
+
+        <div class="venue-stats-box">
+          <div class="stat-row"><span>Total Floor Area:</span> <span class="stat-val">840 m²</span></div>
+          <div class="stat-row"><span>Acoustic Reverberation:</span> <span class="stat-val">1.25s (Target)</span></div>
+          <div class="stat-row"><span>Maximum Lumens:</span> <span class="stat-val">42,000 lm</span></div>
+          <div class="stat-row"><span>Spatial Audio Nodes:</span> <span class="stat-val">32 Channels</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       SECTION 4: MULTITRACK SCHEDULE MATRIX
+       ========================================================================== */ -->
+  <section class="section-container" id="schedule-section">
+    <div class="section-header-wrap">
+      <span class="section-tag">PROGRAM MATRIX</span>
+      <h2 class="section-title">Schedule of Inquiries & Salons</h2>
+      <p class="section-desc">
+        A seamless balance of intense intellectual dialogues, sensory masterclasses, and quiet contemplation periods.
+      </p>
+    </div>
+
+    <div class="schedule-matrix-wrap">
+      <!-- Day Tabs -->
+      <div class="schedule-day-tabs">
+        <div class="schedule-day-tab active" onclick="switchScheduleDay(0)">Day 01 • Vernissage & Vernacular</div>
+        <div class="schedule-day-tab" onclick="switchScheduleDay(1)">Day 02 • Spatial Acoustics & Silicon</div>
+        <div class="schedule-day-tab" onclick="switchScheduleDay(2)">Day 03 • Nocturne Banquets & Departure</div>
+      </div>
+
+      <!-- Timetable List -->
+      <div class="schedule-timeline-list" id="schedule-list">
+        <!-- Dynamically injected items -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       SECTION 5: EVENT MANAGEMENT SUITE PLATFORM CAPABILITIES
+       ========================================================================== */ -->
+  <section class="section-container" id="management-suite">
+    <div class="section-header-wrap">
+      <span class="section-tag">FOR ORGANIZERS & PRODUCERS</span>
+      <h2 class="section-title">The KAIROS Management Engine</h2>
+      <p class="section-desc">
+        Beyond curating our own global summits, KAIROS provides luxury brands and cultural institutions with full-spectrum spatial staging, guest telemetry, and sensory production technology.
+      </p>
+    </div>
+
+    <div class="platform-suite-grid">
+      <!-- Feature 1 -->
+      <div class="platform-feat-card">
+        <div class="feat-icon-bubble">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        </div>
+        <h3 class="feat-card-title">3D Spatial Venue Mapping</h3>
+        <p class="feat-card-desc">
+          High-fidelity lidar point clouds transformed into interactive WebGL seating charts, line-of-sight analysis, and photorealistic lighting simulations before load-in.
+        </p>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="platform-feat-card">
+        <div class="feat-icon-bubble">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h3 class="feat-card-title">Encrypted NFC & 3D Passes</h3>
+        <p class="feat-card-desc">
+          Patron credentialing featuring interactive WebGL passes, cryptographic zero-knowledge check-in, and instant concierge messaging on arrival.
+        </p>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="platform-feat-card">
+        <div class="feat-icon-bubble">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <h3 class="feat-card-title">Multi-tier VIP Ticketing</h3>
+        <p class="feat-card-desc">
+          Dynamic seat tiers, vetted application portals for private salons, invite-only token gating, and seamless fiat/cryptocurrency settlement.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       SECTION 6: PASS CUSTOMIZER & TICKET TIERS
+       ========================================================================== */ -->
+  <section class="section-container" id="passes-section">
+    <div class="section-header-wrap">
+      <span class="section-tag">ATTENDANCE ACCESS</span>
+      <h2 class="section-title">Select Your Summit Membership</h2>
+      <p class="section-desc">
+        All passes include all keynote sessions, bespoke catering, and permanent inclusion in the KAIROS global fellowship alumni network.
+      </p>
+    </div>
+
+    <div class="passes-tiers-grid">
+      <!-- Tier 1 -->
+      <div class="pass-tier-card">
+        <div>
+          <h3 class="tier-name">Day Observer</h3>
+          <div class="tier-price">$450 <span>/ day</span></div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Access to general stage sessions, networking terraces, and digital exhibition archive.</p>
+          <ul class="tier-perks-list">
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Main Stage Keynote Access</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Afternoon Coffee & Tea Salons</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Digital Video Replays</li>
+          </ul>
+        </div>
+        <button class="btn-tier-select" onclick="openPassModal('Day Observer')">Select Observer</button>
+      </div>
+
+      <!-- Tier 2 (Featured) -->
+      <div class="pass-tier-card featured">
+        <div class="tier-badge-featured">RECOMMENDED FELLOWSHIP</div>
+        <div>
+          <h3 class="tier-name">Summit Fellow</h3>
+          <div class="tier-price">$1,250 <span>/ 4-days</span></div>
+          <p style="font-size: 0.85rem; color: var(--accent-gold); margin-bottom: 1.5rem;">Full 4-day summit credential with all masterclasses, private dinners, and interactive 3D NFC lanyard.</p>
+          <ul class="tier-perks-list">
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> All Keynotes & Masterclass Labs</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Private Chef Dinners & Gala</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Physical Titanium NFC Credential</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> KAIROS Alumni Fellowship Access</li>
+          </ul>
+        </div>
+        <button class="btn-tier-select" onclick="openPassModal('Summit Fellow')">Join As Fellow</button>
+      </div>
+
+      <!-- Tier 3 -->
+      <div class="pass-tier-card">
+        <div>
+          <h3 class="tier-name">Patron's Circle</h3>
+          <div class="tier-price">$3,400 <span>/ all-inclusive</span></div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">The highest tier of cultural patronage. Includes luxury villa suite lodging and private speaker breakfasts.</p>
+          <ul class="tier-perks-list">
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> 5-Star Boutique Villa Accommodation</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Chauffeur Airport Concierge</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Private Founders’ Salon Breakfasts</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Dedicated Cultural Concierge</li>
+          </ul>
+        </div>
+        <button class="btn-tier-select" onclick="openPassModal('Patron Circle')">Apply For Patron</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       INTERACTIVE 3D HOLOGRAPHIC PASS & BOOKING MODAL (THREE.JS)
+       ========================================================================== */ -->
+  <div class="modal-backdrop" id="rsvp-modal" aria-hidden="true">
+    <div class="modal-dialog-box">
+      
+      <!-- 3D Lanyard Pass Interactive Viewport -->
+      <div class="modal-3d-pass-view">
+        <canvas id="pass-3d-canvas"></canvas>
+        <span class="pass-tilt-hint">Move cursor / Drag to tilt holographic badge</span>
+      </div>
+
+      <!-- Registration Form View -->
+      <div class="modal-form-view">
+        <button class="modal-close-btn" onclick="closePassModal()" aria-label="Close modal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+
+        <div id="modal-form-container">
+          <h3 class="modal-title">Reserve Credential</h3>
+          <p class="modal-sub">Secure your place among our curated cohort. Credentials are mathematically limited.</p>
+
+          <form id="pass-rsvp-form" onsubmit="handlePassSubmit(event)">
+            <div class="form-group-field">
+              <label>Select Summit</label>
+              <select id="form-summit-select">
+                <option value="The Monolith Summit">The Monolith Summit (Kyoto • Oct 14)</option>
+                <option value="Aura Audiovisual Symposium">Aura Audiovisual Symposium (Reykjavik • Nov 02)</option>
+                <option value="Atelier Noir Culinary Gala">Atelier Noir Culinary Gala (Paris • Dec 18)</option>
+                <option value="Synapse Intelligence Forum">Synapse Intelligence Forum (San Francisco • Jan 22)</option>
+                <option value="Solstice Desert Conclave">Solstice Desert Conclave (AlUla • Feb 15)</option>
+              </select>
+            </div>
+
+            <div class="form-group-field">
+              <label>Membership Tier</label>
+              <select id="form-tier-select" onchange="update3DPassTexture()">
+                <option value="Summit Fellow">Summit Fellow ($1,250)</option>
+                <option value="Patron Circle">Patron's Circle ($3,400)</option>
+                <option value="Day Observer">Day Observer ($450)</option>
+              </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group-field">
+                <label>Full Name</label>
+                <input type="text" id="form-name-input" required placeholder="Elena Rostova" value="Elena Rostova" oninput="update3DPassTexture()" />
+              </div>
+              <div class="form-group-field">
+                <label>Organization / Discipline</label>
+                <input type="text" id="form-org-input" required placeholder="Studio Spatial" value="Studio Spatial" oninput="update3DPassTexture()" />
+              </div>
+            </div>
+
+            <div class="form-group-field">
+              <label>Contact Email</label>
+              <input type="email" id="form-email-input" required placeholder="elena@studiospatial.com" value="elena@studiospatial.com" />
+            </div>
+
+            <button type="submit" class="btn-modal-submit" id="btn-submit-credential">
+              Confirm & Generate 3D Pass
+            </button>
+          </form>
+        </div>
+
+        <!-- Success Screen -->
+        <div class="modal-success-screen" id="modal-success-screen">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; display:flex; align-items:center; justify-content:center; color:#10b981;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <h3 class="modal-title" style="font-size: 1.8rem;">Credential Confirmed</h3>
+          <p class="modal-sub">
+            Your pass has been generated and cryptographically signed. Your 3D holographic lanyard credential is now rendered on the left.
+          </p>
+          <div style="padding: 1rem; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); width: 100%; text-align: left; font-size: 0.8rem;">
+            <div style="display:flex; justify-content:space-between; margin-bottom: 0.4rem;"><span style="color:var(--text-muted)">Pass ID:</span> <span style="color:var(--accent-gold); font-family:monospace;">KAIROS-88392-KYOTO</span></div>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 0.4rem;"><span style="color:var(--text-muted)">Guest:</span> <span id="success-guest-name">Elena Rostova</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted)">Tier:</span> <span id="success-tier-name">Summit Fellow</span></div>
+          </div>
+          <button class="btn-hero-action" style="margin-top: 1rem; width: 100%; text-align: center;" onclick="closePassModal()">
+            Done
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       FOOTER
+       ========================================================================== */ -->
+  <footer class="site-footer">
+    <div class="footer-content-grid">
+      <div>
+        <div class="brand-logo">
+          <div class="brand-symbol">K</div>
+          <div>
+            <span class="brand-name">KAIROS</span>
+            <span class="brand-sub">ATELIER</span>
+          </div>
+        </div>
+        <p class="footer-brand-bio">
+          Curated global gatherings of architects, sound sculptors, and creative technologists. Designed with precision physics and spatial aesthetics.
+        </p>
+      </div>
+
+      <div>
+        <h4 class="footer-col-title">Summits 2026</h4>
+        <ul class="footer-links-list">
+          <li><a href="#" onclick="jumpToSlide(0)">The Monolith (Kyoto)</a></li>
+          <li><a href="#" onclick="jumpToSlide(1)">Aura Audiovisual (Reykjavik)</a></li>
+          <li><a href="#" onclick="jumpToSlide(2)">Atelier Noir (Paris)</a></li>
+          <li><a href="#" onclick="jumpToSlide(3)">Synapse Intelligence (SF)</a></li>
+          <li><a href="#" onclick="jumpToSlide(4)">Solstice Desert (AlUla)</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="footer-col-title">Platform Suite</h4>
+        <ul class="footer-links-list">
+          <li><a href="#venue-spatial">3D Spatial Mapping</a></li>
+          <li><a href="#passes-section">VIP Credential Engine</a></li>
+          <li><a href="#management-suite">Acoustic Simulation</a></li>
+          <li><a href="#" onclick="alert('Client Portal is private to confirmed fellows.')">Fellows Portal</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="footer-col-title">Studio Inquiries</h4>
+        <ul class="footer-links-list">
+          <li>concierge@kairos-atelier.com</li>
+          <li>Kyoto • Paris • San Francisco</li>
+          <li><a href="#passes-section">Request Host Curation</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom-row">
+      <span>© 2026 KAIROS ATELIER INC. ALL RIGHTS RESERVED.</span>
+      <div style="display:flex; gap: 1.5rem;">
+        <a href="#hero-showcase" style="color:var(--text-muted);">BACK TO TOP ↑</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       CORE JAVASCRIPT: FRAMER CONTROLLER, THREE.JS SHADERS, 3D VENUE, 3D PASS
+       ========================================================================== -->
+  <script>
+    /* ==========================================================================
+       DATA: 5 SIGNATURE SUMMITS
+       ========================================================================== */
+    const SUMMITS_DATA = [
+      {
+        numberWord: "ONE",
+        numberRoman: "I",
+        numberDate: "OCT 14",
+        edition: "SUMMIT 01 • KYOTO ARCHITECTURE CONCLAVE",
+        headline: "Stillness has a shape.",
+        description: "Wood, stone, and silence guide every step through the bamboo sanctuary. Architecture harmonizes with ambient acoustic resonance.",
+        date: "OCT 14–18, 2026",
+        venue: "KYOTO PAVILION • JAPAN",
+        capacity: "120 FELLOWS ONLY",
+        image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2400&q=85"
+      },
+      {
+        numberWord: "TWO",
+        numberRoman: "II",
+        numberDate: "NOV 02",
+        edition: "SUMMIT 02 • REYKJAVIK AUDIOVISUAL LAB",
+        headline: "Acoustics dissolve the room.",
+        description: "Vibrations that dissolve the boundary between space and audience. Modular synthesizer waveforms reverberate across geothermal basalt cavern halls.",
+        date: "NOV 02–06, 2026",
+        venue: "HARPA BASALT HALL • ICELAND",
+        capacity: "180 FELLOWS",
+        image: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=2400&q=85"
+      },
+      {
+        numberWord: "THREE",
+        numberRoman: "III",
+        numberDate: "DEC 18",
+        edition: "SUMMIT 03 • ATELIER NOIR GASTRONOMY",
+        headline: "Cooking is a rhythm.",
+        description: "Steam, motion, and the quiet clatter of a knife on marble stone. A nocturnal 14-course sensory dining installation orchestrated by three master chefs.",
+        date: "DEC 18–21, 2026",
+        venue: "PALAIS NOIR • PARIS",
+        capacity: "80 PATRONS ONLY",
+        image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=2400&q=85"
+      },
+      {
+        numberWord: "FOUR",
+        numberRoman: "IV",
+        numberDate: "JAN 22",
+        edition: "SUMMIT 04 • SYNAPSE INTELLIGENCE FORUM",
+        headline: "Between rooms of silicon.",
+        description: "A rare symposium confronting the boundary between synthetic intelligence, computational biology, and philosophical human creative agency.",
+        date: "JAN 22–26, 2027",
+        venue: "THE PRESIDIO • SAN FRANCISCO",
+        capacity: "250 FELLOWS",
+        image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=2400&q=85"
+      },
+      {
+        numberWord: "FIVE",
+        numberRoman: "V",
+        numberDate: "FEB 15",
+        edition: "SUMMIT 05 • CELESTIAL DESERT GATHERING",
+        headline: "Daylight surrenders to stars.",
+        description: "Where crimson desert canyons meet high-magnification telescopes and ambient soundscapes under pristine, lightless desert night skies.",
+        date: "FEB 15–20, 2027",
+        venue: "CANYON OBSERVATORY • ALULA",
+        capacity: "150 FELLOWS",
+        image: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=2400&q=85"
+      }
+    ];
+
+    /* ==========================================================================
+       APPLICATION STATE
+       ========================================================================== */
+    const state = {
+      currentIndex: 0,
+      titleMode: 'words',
+      contentAlign: 'top-left',
+      zoomActive: true,
+      dotsActive: true,
+      autoplayActive: false,
+      autoplayTimer: null,
+      shaderType: 0,
+      isTransitioning: false,
+      audioActive: false
+    };
+
+    /* ==========================================================================
+       THREE.JS WEBGL HERO SHADER ENGINE
+       ========================================================================== */
+    let heroScene, heroCamera, heroRenderer, heroMaterial, heroMesh;
+    const heroCanvas = document.getElementById('hero-webgl-canvas');
+    let textures = [];
+    const textureLoader = new THREE.TextureLoader();
+
+    const heroVertexShader = `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position, 1.0);
+      }
+    `;
+
+    const heroFragmentShader = `
+      uniform sampler2D u_texture1;
+      uniform sampler2D u_texture2;
+      uniform float u_progress;
+      uniform float u_time;
+      uniform int u_shaderType;
+      uniform vec2 u_resolution;
+      varying vec2 vUv;
+
+      void main() {
+        vec2 uv = vUv;
+        float progress = u_progress;
+
+        if (u_shaderType == 0) {
+          // Liquid Ripple Displacement
+          vec2 dir = uv - vec2(0.5);
+          float dist = length(dir);
+          float wave = sin(dist * 18.0 - u_time * 3.0) * 0.04 * (1.0 - abs(progress - 0.5) * 2.0);
+          
+          vec2 uv1 = uv + dir * progress * wave;
+          vec2 uv2 = uv - dir * (1.0 - progress) * wave;
+
+          float r = texture2D(u_texture1, uv1 + vec2(wave * 0.5, 0.0)).r;
+          float g = texture2D(u_texture1, uv1).g;
+          float b = texture2D(u_texture1, uv1 - vec2(wave * 0.5, 0.0)).b;
+          vec4 col1 = vec4(r, g, b, 1.0);
+
+          vec4 col2 = texture2D(u_texture2, uv2);
+          gl_FragColor = mix(col1, col2, smoothstep(0.0, 1.0, progress));
+
+        } else {
+          // Curtain Wave / Spatial Stretch
+          float wave = sin(uv.y * 12.0 + progress * 3.14159) * 0.06 * (1.0 - progress);
+          vec2 uv1 = vec2(uv.x - progress * 0.3 + wave, uv.y);
+          vec2 uv2 = vec2(uv.x + (1.0 - progress) * 0.3 - wave, uv.y);
+
+          vec4 col1 = texture2D(u_texture1, uv1);
+          vec4 col2 = texture2D(u_texture2, uv2);
+          gl_FragColor = mix(col1, col2, smoothstep(0.0, 1.0, progress));
+        }
+      }
+    `;
+
+    function initHeroWebGL() {
+      if (!heroCanvas) return;
+
+      heroScene = new THREE.Scene();
+      heroCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      
+      heroRenderer = new THREE.WebGLRenderer({
+        canvas: heroCanvas,
+        alpha: true,
+        antialias: true,
+        powerPreference: 'high-performance'
+      });
+      heroRenderer.setSize(window.innerWidth, window.innerHeight);
+      heroRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      // Preload textures
+      SUMMITS_DATA.forEach((s, idx) => {
+        textureLoader.load(s.image, (tex) => {
+          tex.generateMipmaps = true;
+          tex.minFilter = THREE.LinearFilter;
+          tex.magFilter = THREE.LinearFilter;
+          textures[idx] = tex;
+          if (idx === 0 && heroMaterial) {
+            heroMaterial.uniforms.u_texture1.value = tex;
+            heroMaterial.uniforms.u_texture2.value = tex;
+          }
+        });
+      });
+
+      const placeholder = createFallbackTexture();
+
+      heroMaterial = new THREE.ShaderMaterial({
+        vertexShader: heroVertexShader,
+        fragmentShader: heroFragmentShader,
+        uniforms: {
+          u_texture1: { value: placeholder },
+          u_texture2: { value: placeholder },
+          u_progress: { value: 0.0 },
+          u_time: { value: 0.0 },
+          u_shaderType: { value: 0 },
+          u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+        }
+      });
+
+      const geometry = new THREE.PlaneGeometry(2, 2);
+      heroMesh = new THREE.Mesh(geometry, heroMaterial);
+      heroScene.add(heroMesh);
+
+      window.addEventListener('resize', onHeroResize);
+      animateHeroShader();
+    }
+
+    function createFallbackTexture() {
+      const c = document.createElement('canvas');
+      c.width = 16; c.height = 16;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#111116';
+      ctx.fillRect(0, 0, 16, 16);
+      return new THREE.CanvasTexture(c);
+    }
+
+    function onHeroResize() {
+      if (!heroRenderer || !heroMaterial) return;
+      heroRenderer.setSize(window.innerWidth, window.innerHeight);
+      heroMaterial.uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
+    }
+
+    let shaderClock = new THREE.Clock();
+    function animateHeroShader() {
+      requestAnimationFrame(animateHeroShader);
+      if (heroMaterial) {
+        heroMaterial.uniforms.u_time.value = shaderClock.getElapsedTime();
+      }
+      if (heroRenderer && heroScene && heroCamera) {
+        heroRenderer.render(heroScene, heroCamera);
+      }
+    }
+
+    function transitionSlideWebGL(fromIndex, toIndex) {
+      if (!heroMaterial || !textures[fromIndex] || !textures[toIndex]) {
+        updateDOMContent(toIndex);
+        return;
+      }
+
+      heroMaterial.uniforms.u_texture1.value = textures[fromIndex];
+      heroMaterial.uniforms.u_texture2.value = textures[toIndex];
+      heroMaterial.uniforms.u_shaderType.value = state.shaderType;
+
+      let startTime = performance.now();
+      const duration = 900;
+
+      state.isTransitioning = true;
+      updateDOMContent(toIndex);
+
+      function stepShader(now) {
+        const elapsed = now - startTime;
+        const p = Math.min(elapsed / duration, 1.0);
+        const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+        heroMaterial.uniforms.u_progress.value = eased;
+
+        if (p < 1.0) {
+          requestAnimationFrame(stepShader);
+        } else {
+          heroMaterial.uniforms.u_progress.value = 1.0;
+          heroMaterial.uniforms.u_texture1.value = textures[toIndex];
+          state.isTransitioning = false;
+        }
+      }
+      requestAnimationFrame(stepShader);
+    }
+
+    /* ==========================================================================
+       DOM CONTENT & UI CONTROLLER
+       ========================================================================== */
+    const heroBackdrop = document.getElementById('hero-backdrop');
+    const heroHeadline = document.getElementById('hero-headline');
+    const heroDescription = document.getElementById('hero-description');
+    const heroEditionTag = document.getElementById('hero-edition-tag');
+    const pillDate = document.getElementById('pill-date');
+    const pillVenue = document.getElementById('pill-venue');
+    const pillCap = document.getElementById('pill-cap');
+    const giantIndexContainer = document.getElementById('hero-giant-index');
+    const heroDotsRail = document.getElementById('hero-dots-rail');
+    const heroTextBlock = document.getElementById('hero-text-block');
+
+    function updateDOMContent(idx) {
+      const data = SUMMITS_DATA[idx];
+      
+      if (heroBackdrop) {
+        heroBackdrop.style.backgroundImage = `url(${data.image})`;
+      }
+
+      heroHeadline.style.opacity = '0';
+      heroHeadline.style.transform = 'translateY(8px)';
+      heroDescription.style.opacity = '0';
+      heroDescription.style.transform = 'translateY(8px)';
+
+      setTimeout(() => {
+        heroEditionTag.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--accent-gold);"></span> ${data.edition}`;
+        heroHeadline.textContent = data.headline;
+        heroDescription.textContent = data.description;
+        pillDate.textContent = data.date;
+        pillVenue.textContent = data.venue;
+        pillCap.textContent = data.capacity;
+
+        heroHeadline.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+        heroHeadline.style.opacity = '1';
+        heroHeadline.style.transform = 'translateY(0)';
+
+        heroDescription.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s';
+        heroDescription.style.opacity = '1';
+        heroDescription.style.transform = 'translateY(0)';
+      }, 120);
+
+      const items = giantIndexContainer.querySelectorAll('.giant-index-item');
+      items.forEach((item, i) => {
+        item.classList.toggle('active', i === idx);
+      });
+
+      const dots = heroDotsRail.querySelectorAll('.hero-dot');
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === idx);
+      });
+    }
+
+    function jumpToSlide(newIndex) {
+      if (newIndex === state.currentIndex || state.isTransitioning) return;
+      const oldIndex = state.currentIndex;
+      state.currentIndex = (newIndex + SUMMITS_DATA.length) % SUMMITS_DATA.length;
+      transitionSlideWebGL(oldIndex, state.currentIndex);
+    }
+
+    function renderGiantIndex() {
+      giantIndexContainer.innerHTML = '';
+      SUMMITS_DATA.forEach((d, i) => {
+        const div = document.createElement('div');
+        div.className = `giant-index-item ${i === state.currentIndex ? 'active' : ''}`;
+        div.dataset.index = i;
+        
+        let label = d.numberWord;
+        if (state.titleMode === 'roman') label = d.numberRoman;
+        if (state.titleMode === 'dates') label = d.numberDate;
+        div.textContent = label;
+
+        div.addEventListener('click', () => jumpToSlide(i));
+        giantIndexContainer.appendChild(div);
+      });
+    }
+
+    heroBackdrop.style.backgroundImage = `url(${SUMMITS_DATA[0].image})`;
+
+    document.getElementById('btn-hero-prev').addEventListener('click', () => {
+      jumpToSlide(state.currentIndex - 1);
+    });
+    document.getElementById('btn-hero-next').addEventListener('click', () => {
+      jumpToSlide(state.currentIndex + 1);
+    });
+
+    heroDotsRail.addEventListener('click', (e) => {
+      const dot = e.target.closest('.hero-dot');
+      if (dot) {
+        jumpToSlide(parseInt(dot.dataset.index, 10));
+      }
+    });
+
+    /* ==========================================================================
+       FRAMER CONTROL TOOLBAR ACTIONS
+       ========================================================================== */
+    const btnTitleWords = document.getElementById('btn-title-words');
+    const btnTitleRoman = document.getElementById('btn-title-roman');
+    const btnTitleDates = document.getElementById('btn-title-dates');
+
+    function setTitleMode(mode) {
+      state.titleMode = mode;
+      [btnTitleWords, btnTitleRoman, btnTitleDates].forEach(b => b.classList.remove('active'));
+      if (mode === 'words') btnTitleWords.classList.add('active');
+      if (mode === 'roman') btnTitleRoman.classList.add('active');
+      if (mode === 'dates') btnTitleDates.classList.add('active');
+      renderGiantIndex();
+    }
+    btnTitleWords.addEventListener('click', () => setTitleMode('words'));
+    btnTitleRoman.addEventListener('click', () => setTitleMode('roman'));
+    btnTitleDates.addEventListener('click', () => setTitleMode('dates'));
+
+    const btnPosTopLeft = document.getElementById('btn-pos-topleft');
+    const btnPosBottomLeft = document.getElementById('btn-pos-bottomleft');
+    const btnPosCenter = document.getElementById('btn-pos-center');
+
+    function setContentAlign(align) {
+      state.contentAlign = align;
+      [btnPosTopLeft, btnPosBottomLeft, btnPosCenter].forEach(b => b.classList.remove('active'));
+      heroTextBlock.classList.remove('pos-top-left', 'pos-bottom-left', 'pos-center');
+
+      if (align === 'top-left') {
+        btnPosTopLeft.classList.add('active');
+        heroTextBlock.classList.add('pos-top-left');
+      } else if (align === 'bottom-left') {
+        btnPosBottomLeft.classList.add('active');
+        heroTextBlock.classList.add('pos-bottom-left');
+      } else {
+        btnPosCenter.classList.add('active');
+        heroTextBlock.classList.add('pos-center');
+      }
+    }
+    btnPosTopLeft.addEventListener('click', () => setContentAlign('top-left'));
+    btnPosBottomLeft.addEventListener('click', () => setContentAlign('bottom-left'));
+    btnPosCenter.addEventListener('click', () => setContentAlign('center'));
+
+    const btnShaderRipple = document.getElementById('btn-shader-ripple');
+    const btnShaderCurtain = document.getElementById('btn-shader-curtain');
+    btnShaderRipple.addEventListener('click', () => {
+      state.shaderType = 0;
+      btnShaderRipple.classList.add('active');
+      btnShaderCurtain.classList.remove('active');
+    });
+    btnShaderCurtain.addEventListener('click', () => {
+      state.shaderType = 1;
+      btnShaderCurtain.classList.add('active');
+      btnShaderRipple.classList.remove('active');
+    });
+
+    const toggleZoom = document.getElementById('toggle-zoom');
+    toggleZoom.addEventListener('click', () => {
+      state.zoomActive = !state.zoomActive;
+      const pill = toggleZoom.querySelector('.switch-pill');
+      pill.classList.toggle('active', state.zoomActive);
+      heroBackdrop.classList.toggle('zoom-active', state.zoomActive);
+    });
+
+    const toggleDots = document.getElementById('toggle-dots');
+    toggleDots.addEventListener('click', () => {
+      state.dotsActive = !state.dotsActive;
+      const pill = toggleDots.querySelector('.switch-pill');
+      pill.classList.toggle('active', state.dotsActive);
+      heroDotsRail.style.opacity = state.dotsActive ? '1' : '0';
+      heroDotsRail.style.pointerEvents = state.dotsActive ? 'auto' : 'none';
+    });
+
+    const toggleAutoplay = document.getElementById('toggle-autoplay');
+    toggleAutoplay.addEventListener('click', () => {
+      state.autoplayActive = !state.autoplayActive;
+      const pill = toggleAutoplay.querySelector('.switch-pill');
+      pill.classList.toggle('active', state.autoplayActive);
+      
+      if (state.autoplayActive) {
+        state.autoplayTimer = setInterval(() => {
+          jumpToSlide(state.currentIndex + 1);
+        }, 5000);
+      } else {
+        clearInterval(state.autoplayTimer);
+      }
+    });
+
+    document.getElementById('btn-preset-minimal').addEventListener('click', () => {
+      document.getElementById('btn-preset-minimal').classList.add('active');
+      document.getElementById('btn-preset-custom').classList.remove('active');
+      setTitleMode('roman');
+      setContentAlign('bottom-left');
+    });
+    document.getElementById('btn-preset-custom').addEventListener('click', () => {
+      document.getElementById('btn-preset-custom').classList.add('active');
+      document.getElementById('btn-preset-minimal').classList.remove('active');
+      setTitleMode('words');
+      setContentAlign('top-left');
+    });
+
+    /* ==========================================================================
+       SECTION 2: FILTER TABS CONTROLLER
+       ========================================================================== */
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const cards = document.querySelectorAll('.summit-card');
+
+    filterTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        filterTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const f = tab.dataset.filter;
+
+        cards.forEach(card => {
+          if (f === 'all' || card.dataset.category === f) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    function toggleBookmark(btn) {
+      const isSaved = btn.getAttribute('data-saved') === 'true';
+      if (isSaved) {
+        btn.setAttribute('data-saved', 'false');
+        btn.style.background = 'rgba(18, 18, 22, 0.75)';
+        btn.style.color = '#fff';
+      } else {
+        btn.setAttribute('data-saved', 'true');
+        btn.style.background = '#e2c08d';
+        btn.style.color = '#000';
+      }
+    }
+
+    /* ==========================================================================
+       SECTION 3: THREE.JS SPATIAL VENUE 3D ENGINE
+       ========================================================================== */
+    let venueScene, venueCamera, venueRenderer, venueControls;
+    let venueStageMesh, venueLightRigs = [], venueParticles;
+    let stageAutoRotate = true;
+    const venueCanvas = document.getElementById('venue-three-canvas');
+
+    function initVenue3D() {
+      if (!venueCanvas) return;
+
+      venueScene = new THREE.Scene();
+      venueScene.background = new THREE.Color(0x08080c);
+      venueScene.fog = new THREE.FogExp2(0x08080c, 0.02);
+
+      const rect = venueCanvas.parentElement.getBoundingClientRect();
+      venueCamera = new THREE.PerspectiveCamera(45, (rect.width || 800) / (rect.height || 580), 0.1, 100);
+      venueCamera.position.set(0, 14, 26);
+
+      venueRenderer = new THREE.WebGLRenderer({
+        canvas: venueCanvas,
+        antialias: true,
+        powerPreference: 'high-performance'
+      });
+      venueRenderer.setSize(rect.width || 800, rect.height || 580);
+      venueRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      venueRenderer.shadowMap.enabled = true;
+
+      venueControls = new THREE.OrbitControls(venueCamera, venueCanvas);
+      venueControls.enableDamping = true;
+      venueControls.dampingFactor = 0.05;
+      venueControls.maxPolarAngle = Math.PI / 2.05;
+      venueControls.minDistance = 6;
+      venueControls.maxDistance = 45;
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
+      venueScene.add(ambientLight);
+
+      const floorGeo = new THREE.CylinderGeometry(20, 20, 0.4, 64);
+      const floorMat = new THREE.MeshStandardMaterial({
+        color: 0x121218,
+        roughness: 0.2,
+        metalness: 0.8
+      });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.position.y = -0.2;
+      floor.receiveShadow = true;
+      venueScene.add(floor);
+
+      const gridHelper = new THREE.PolarGridHelper(19, 8, 16, 64, 0x333344, 0x1c1c28);
+      gridHelper.position.y = 0.05;
+      venueScene.add(gridHelper);
+
+      const stageGeo = new THREE.BoxGeometry(10, 0.8, 6);
+      const stageMat = new THREE.MeshStandardMaterial({
+        color: 0x22222c,
+        roughness: 0.3,
+        metalness: 0.7
+      });
+      venueStageMesh = new THREE.Mesh(stageGeo, stageMat);
+      venueStageMesh.position.y = 0.4;
+      venueStageMesh.castShadow = true;
+      venueStageMesh.receiveShadow = true;
+      venueScene.add(venueStageMesh);
+
+      const totemGeo = new THREE.BoxGeometry(3.5, 9, 0.6);
+      const totemMat = new THREE.MeshStandardMaterial({
+        color: 0x0e0e14,
+        roughness: 0.1,
+        metalness: 0.9
+      });
+      const totem = new THREE.Mesh(totemGeo, totemMat);
+      totem.position.set(0, 4.5, -3.2);
+      venueScene.add(totem);
+
+      for (let r = 0; r < 4; r++) {
+        const ringRadius = 11 + r * 2.2;
+        const tierGeo = new THREE.CylinderGeometry(ringRadius, ringRadius, 0.5, 32, 1, true, -Math.PI * 0.7, Math.PI * 1.4);
+        const tierMat = new THREE.MeshStandardMaterial({
+          color: 0x161620,
+          roughness: 0.6,
+          side: THREE.DoubleSide
+        });
+        const tierMesh = new THREE.Mesh(tierGeo, tierMat);
+        tierMesh.position.y = 0.6 + r * 0.7;
+        tierMesh.rotation.y = Math.PI / 2;
+        venueScene.add(tierMesh);
+      }
+
+      createVenueSpotlights(0x70a1ff);
+
+      const partGeo = new THREE.BufferGeometry();
+      const partCount = 200;
+      const partPos = new Float32Array(partCount * 3);
+      for (let i = 0; i < partCount * 3; i += 3) {
+        partPos[i] = (Math.random() - 0.5) * 30;
+        partPos[i + 1] = Math.random() * 14;
+        partPos[i + 2] = (Math.random() - 0.5) * 30;
+      }
+      partGeo.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
+      const partMat = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 0.12,
+        transparent: true,
+        opacity: 0.4
+      });
+      venueParticles = new THREE.Points(partGeo, partMat);
+      venueScene.add(venueParticles);
+
+      window.addEventListener('resize', onVenueResize);
+      animateVenue3D();
+    }
+
+    function createVenueSpotlights(colorHex) {
+      venueLightRigs.forEach(l => venueScene.remove(l));
+      venueLightRigs = [];
+
+      const angles = [-3.5, 0, 3.5];
+      angles.forEach((xPos) => {
+        const spot = new THREE.SpotLight(colorHex, 6, 30, Math.PI / 5, 0.4, 1.2);
+        spot.position.set(xPos, 12, 6);
+        spot.target = venueStageMesh;
+        venueScene.add(spot);
+        venueLightRigs.push(spot);
+
+        const coneGeo = new THREE.ConeGeometry(2.4, 12, 16, 1, true);
+        const coneMat = new THREE.MeshBasicMaterial({
+          color: colorHex,
+          transparent: true,
+          opacity: 0.1,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        });
+        const coneMesh = new THREE.Mesh(coneGeo, coneMat);
+        coneMesh.position.set(xPos, 6, 3);
+        coneMesh.rotation.x = Math.PI / 5;
+        venueScene.add(coneMesh);
+        venueLightRigs.push(coneMesh);
+      });
+    }
+
+    function setVenueLighting(preset) {
+      document.querySelectorAll('.lighting-preset-btn').forEach(b => b.classList.remove('active'));
+      const eventTarget = window.event ? window.event.currentTarget : null;
+      if (eventTarget) eventTarget.classList.add('active');
+
+      let col = 0x70a1ff;
+      if (preset === 'amber') col = 0xe2c08d;
+      if (preset === 'monochrome') col = 0xffffff;
+      if (preset === 'emerald') col = 0x10b981;
+
+      createVenueSpotlights(col);
+    }
+
+    function resetVenueCamera(view) {
+      if (!venueControls) return;
+      if (view === 'front') {
+        venueCamera.position.set(0, 5, 18);
+      } else if (view === 'mezzanine') {
+        venueCamera.position.set(12, 12, 18);
+      } else if (view === 'top') {
+        venueCamera.position.set(0, 28, 0.1);
+      }
+      venueControls.target.set(0, 1, 0);
+      venueControls.update();
+    }
+
+    function toggleStageRotation() {
+      stageAutoRotate = !stageAutoRotate;
+      if (window.event && window.event.currentTarget) {
+        window.event.currentTarget.textContent = `Rotate: ${stageAutoRotate ? 'On' : 'Off'}`;
+      }
+    }
+
+    function onVenueResize() {
+      if (!venueCanvas || !venueRenderer) return;
+      const rect = venueCanvas.parentElement.getBoundingClientRect();
+      venueCamera.aspect = rect.width / rect.height;
+      venueCamera.updateProjectionMatrix();
+      venueRenderer.setSize(rect.width, rect.height);
+    }
+
+    function animateVenue3D() {
+      requestAnimationFrame(animateVenue3D);
+      if (venueControls) venueControls.update();
+
+      if (stageAutoRotate && venueScene) {
+        venueScene.rotation.y += 0.002;
+      }
+
+      if (venueParticles) {
+        venueParticles.rotation.y += 0.0005;
+      }
+
+      if (venueRenderer && venueScene && venueCamera) {
+        venueRenderer.render(venueScene, venueCamera);
+      }
+    }
+
+    /* ==========================================================================
+       SECTION 4: TIMETABLE SCHEDULE INJECTION
+       ========================================================================== */
+    const SCHEDULE_DAYS = [
+      [
+        { time: "09:30 - 11:00", title: "Vernissage: Architectural Silence & Kyoto Timber", speaker: "Kengo Kuma & Junya Ishigami", stage: "Bamboo Pavilion Main Stage" },
+        { time: "11:30 - 13:00", title: "Spatial Soundscapes: Sculpting Silence with Microphones", speaker: "Ryuichi Sakamoto Legacy Quartet", stage: "Acoustic Shell Lab" },
+        { time: "15:00 - 17:30", title: "Materiality Salon: Basalt, Japanese Hinoki, and Glass", speaker: "Elena Rostova & Tadao Ando Studio", stage: "Zen Garden Salon" },
+        { time: "20:00 - 23:00", title: "Nocturne Opening Feast & Ambient Sound Baths", speaker: "Chef Yoshihiro Narisawa", stage: "Water Terrace Courtyard" }
+      ],
+      [
+        { time: "10:00 - 11:45", title: "Synthetic Consciousness: The Architecture of Reasoning", speaker: "Demis Hassabis & Yann LeCun", stage: "Kyoto Pavilion Main Stage" },
+        { time: "12:15 - 14:00", title: "Generative Audiovisual Performance: 16-Channel Basalt", speaker: "Ryoji Ikeda & Alva Noto", stage: "Subterranean Stone Chamber" },
+        { time: "16:00 - 18:00", title: "The Next 100 Years of Human Habitation in Extreme Climates", speaker: "Bjarke Ingels & Neri Oxman", stage: "Bamboo Pavilion Main Stage" },
+        { time: "21:00 - 01:00", title: "Celestial Observation & Modular Synthesizer Concert", speaker: "Hania Rani & Caterina Barbieri", stage: "Mountain Stargazer Platform" }
+      ],
+      [
+        { time: "10:30 - 12:00", title: "Private Salon: The Ethics of Curated Scarcity in Culture", speaker: "Hans Ulrich Obrist & Rem Koolhaas", stage: "Private Tea House" },
+        { time: "13:30 - 15:30", title: "Gastronomic Resonance: Taste Frequencies & Memory", speaker: "Ferran Adrià & Elena Arzak", stage: "Pavilion Culinary Lab" },
+        { time: "17:00 - 19:30", title: "Closing Charter: The Kyoto Cultural Communiqué 2026", speaker: "Cohort Fellowship Delegation", stage: "Bamboo Pavilion Main Stage" },
+        { time: "21:00 - LATE", title: "Lantern Departure Ceremony on the Katsura River", speaker: "Full Fellowship Cohort", stage: "Riverbanks of Arashiyama" }
+      ]
+    ];
+
+    function switchScheduleDay(dayIdx) {
+      document.querySelectorAll('.schedule-day-tab').forEach((tab, i) => {
+        tab.classList.toggle('active', i === dayIdx);
+      });
+
+      const listContainer = document.getElementById('schedule-list');
+      listContainer.innerHTML = '';
+
+      SCHEDULE_DAYS[dayIdx].forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'timeline-item-card';
+        card.innerHTML = `
+          <div class="timeline-time">${item.time}</div>
+          <div class="timeline-details">
+            <h4>${item.title}</h4>
+            <div class="timeline-speaker-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>${item.speaker}</span>
+            </div>
+          </div>
+          <div class="timeline-stage-tag">${item.stage}</div>
+        `;
+        listContainer.appendChild(card);
+      });
+    }
+    switchScheduleDay(0);
+
+    /* ==========================================================================
+       SECTION 6: INTERACTIVE 3D HOLOGRAPHIC PASS (THREE.JS MODAL)
+       ========================================================================== */
+    let passScene, passCamera, passRenderer, passCardMesh;
+    const passCanvas = document.getElementById('pass-3d-canvas');
+    let passCanvasTexture;
+
+    function init3DPassEngine() {
+      if (!passCanvas) return;
+
+      passScene = new THREE.Scene();
+      passCamera = new THREE.PerspectiveCamera(40, passCanvas.clientWidth / passCanvas.clientHeight, 0.1, 100);
+      passCamera.position.set(0, 0, 8.5);
+
+      passRenderer = new THREE.WebGLRenderer({
+        canvas: passCanvas,
+        alpha: true,
+        antialias: true
+      });
+      passRenderer.setSize(passCanvas.clientWidth, passCanvas.clientHeight);
+      passRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      const pLight1 = new THREE.PointLight(0xffffff, 2.5, 20);
+      pLight1.position.set(5, 5, 8);
+      passScene.add(pLight1);
+
+      const pLight2 = new THREE.PointLight(0xe2c08d, 2.0, 20);
+      pLight2.position.set(-5, -4, 6);
+      passScene.add(pLight2);
+
+      const ambientP = new THREE.AmbientLight(0xffffff, 0.8);
+      passScene.add(ambientP);
+
+      createPassTextureCanvas();
+
+      const badgeGeo = new THREE.BoxGeometry(3.6, 5.2, 0.08);
+      const badgeMat = new THREE.MeshPhysicalMaterial({
+        map: passCanvasTexture,
+        metalness: 0.7,
+        roughness: 0.25,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.1,
+        reflectivity: 0.95
+      });
+
+      passCardMesh = new THREE.Mesh(badgeGeo, badgeMat);
+      passScene.add(passCardMesh);
+
+      const claspGeo = new THREE.BoxGeometry(1.0, 0.3, 0.12);
+      const claspMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.1 });
+      const clasp = new THREE.Mesh(claspGeo, claspMat);
+      clasp.position.set(0, 2.75, 0);
+      passCardMesh.add(clasp);
+
+      let mouseX = 0, mouseY = 0;
+      passCanvas.addEventListener('mousemove', (e) => {
+        const rect = passCanvas.getBoundingClientRect();
+        mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      });
+
+      passCanvas.addEventListener('mouseleave', () => {
+        mouseX = 0;
+        mouseY = 0;
+      });
+
+      function animatePass() {
+        requestAnimationFrame(animatePass);
+        if (passCardMesh) {
+          passCardMesh.rotation.y += (mouseX * 0.6 - passCardMesh.rotation.y) * 0.08;
+          passCardMesh.rotation.x += (-mouseY * 0.6 - passCardMesh.rotation.x) * 0.08;
+        }
+        if (passRenderer && passScene && passCamera) {
+          passRenderer.render(passScene, passCamera);
+        }
+      }
+      animatePass();
+    }
+
+    function createPassTextureCanvas() {
+      const cvs = document.createElement('canvas');
+      cvs.width = 512;
+      cvs.height = 768;
+      const ctx = cvs.getContext('2d');
+
+      const name = document.getElementById('form-name-input') ? document.getElementById('form-name-input').value : 'Elena Rostova';
+      const org = document.getElementById('form-org-input') ? document.getElementById('form-org-input').value : 'Studio Spatial';
+      const tier = document.getElementById('form-tier-select') ? document.getElementById('form-tier-select').value : 'Summit Fellow';
+
+      ctx.fillStyle = '#101014';
+      ctx.fillRect(0, 0, 512, 768);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 28px "Cinzel", serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('KAIROS', 256, 75);
+
+      ctx.font = '12px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#a1a1aa';
+      ctx.fillText('ATELIER DE GATHERING • 2026', 256, 105);
+
+      const grad = ctx.createLinearGradient(0, 140, 512, 170);
+      grad.addColorStop(0, '#70a1ff');
+      grad.addColorStop(0.3, '#ffffff');
+      grad.addColorStop(0.6, '#e2c08d');
+      grad.addColorStop(1, '#10b981');
+      ctx.fillStyle = grad;
+      ctx.fillRect(40, 135, 432, 6);
+
+      ctx.fillStyle = '#1a1a24';
+      ctx.fillRect(60, 180, 70, 50);
+      ctx.strokeStyle = '#e2c08d';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(60, 180, 70, 50);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'italic 44px "Cormorant Garamond", serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(name, 60, 310);
+
+      ctx.fillStyle = '#e2c08d';
+      ctx.font = '16px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(org.toUpperCase(), 60, 345);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(60, 390, 240, 38);
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 15px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(tier.toUpperCase(), 75, 415);
+
+      ctx.fillStyle = '#71717a';
+      ctx.font = '13px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('EDITION: KYOTO MONOLITH • PASS ID #88392', 60, 480);
+      ctx.fillText('ACCESS: FULL MASTERCLASSES + VIP SALONS', 60, 505);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(330, 590, 120, 120);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(342, 602, 36, 36);
+      ctx.fillRect(402, 602, 36, 36);
+      ctx.fillRect(342, 662, 36, 36);
+      ctx.fillRect(390, 650, 24, 24);
+
+      if (!passCanvasTexture) {
+        passCanvasTexture = new THREE.CanvasTexture(cvs);
+      } else {
+        passCanvasTexture.image = cvs;
+        passCanvasTexture.needsUpdate = true;
+      }
+    }
+
+    function update3DPassTexture() {
+      createPassTextureCanvas();
+    }
+
+    const rsvpModal = document.getElementById('rsvp-modal');
+    function openPassModal(tierName) {
+      if (tierName && document.getElementById('form-tier-select')) {
+        document.getElementById('form-tier-select').value = tierName;
+      }
+      rsvpModal.classList.add('open');
+      rsvpModal.setAttribute('aria-hidden', 'false');
+
+      setTimeout(() => {
+        if (!passRenderer) {
+          init3DPassEngine();
+        } else {
+          const rect = passCanvas.getBoundingClientRect();
+          passCamera.aspect = rect.width / rect.height;
+          passCamera.updateProjectionMatrix();
+          passRenderer.setSize(rect.width, rect.height);
+          update3DPassTexture();
+        }
+      }, 50);
+    }
+
+    function closePassModal() {
+      rsvpModal.classList.remove('open');
+      rsvpModal.setAttribute('aria-hidden', 'true');
+      document.getElementById('modal-form-container').style.display = 'block';
+      document.getElementById('modal-success-screen').classList.remove('show');
+    }
+
+    function handlePassSubmit(e) {
+      e.preventDefault();
+      const guest = document.getElementById('form-name-input').value;
+      const tier = document.getElementById('form-tier-select').value;
+
+      document.getElementById('success-guest-name').textContent = guest;
+      document.getElementById('success-tier-name').textContent = tier;
+
+      document.getElementById('modal-form-container').style.display = 'none';
+      document.getElementById('modal-success-screen').classList.add('show');
+      update3DPassTexture();
+    }
+
+    /* ==========================================================================
+       SYNTHESIZED AMBIENT AUDIO ENGINE (WEB AUDIO API)
+       ========================================================================== */
+    let audioCtx, oscNodes = [], gainNode;
+    const btnAudio = document.getElementById('btn-audio-toggle');
+    const audioLabel = document.getElementById('audio-label');
+
+    function toggleAmbientSound() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      if (state.audioActive) {
+        if (gainNode) {
+          gainNode.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 1.2);
+          setTimeout(() => {
+            oscNodes.forEach(o => { try { o.stop(); } catch(e){} });
+            oscNodes = [];
+          }, 1200);
+        }
+        state.audioActive = false;
+        audioLabel.textContent = 'SOUND: OFF';
+        btnAudio.style.borderColor = 'var(--border-subtle)';
+      } else {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+
+        gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 2.0);
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(320, audioCtx.currentTime);
+
+        gainNode.connect(filter);
+        filter.connect(audioCtx.destination);
+
+        const freqs = [73.42, 110.00, 174.61, 261.63, 329.63];
+        freqs.forEach(f => {
+          const osc = audioCtx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(f + (Math.random() - 0.5) * 0.4, audioCtx.currentTime);
+          osc.connect(gainNode);
+          osc.start();
+          oscNodes.push(osc);
+        });
+
+        state.audioActive = true;
+        audioLabel.textContent = 'SOUND: ON';
+        btnAudio.style.borderColor = 'var(--accent-gold)';
+      }
+    }
+    btnAudio.addEventListener('click', toggleAmbientSound);
+
+    /* ==========================================================================
+       INITIALIZATION
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderGiantIndex();
+      initHeroWebGL();
+      initVenue3D();
+    });
+  </script>
+</body>
+</html>
